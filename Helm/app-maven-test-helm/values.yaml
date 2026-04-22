@@ -1,0 +1,33 @@
+replicaCount: 1
+
+image:
+  repository: docker.io/gustavobarrera/maven-test-cicd
+  pullPolicy: IfNotPresent
+  # El Image Updater actualizará este valor
+  tag: "1.0.20" 
+
+service:
+  type: ClusterIP
+  port: 8080 # Puerto estándar de Spring Boot/Java
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 250m
+    memory: 256Mi
+
+livenessProbe:
+  httpGet:
+    path: /actuator/health # Ajusta al endpoint de salud de tu app
+    port: http
+  initialDelaySeconds: 30
+  periodSeconds: 10
+
+readinessProbe:
+  httpGet:
+    path: /actuator/health
+    port: http
+  initialDelaySeconds: 30
+  periodSeconds: 10

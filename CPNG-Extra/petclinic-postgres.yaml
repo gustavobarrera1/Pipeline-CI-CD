@@ -1,0 +1,17 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: petclinic-db
+spec:
+  instances: 1 # Para CI/CD con una instancia basta. 3 sería para Alta Disponibilidad (HA).
+  imageName: ghcr.io/cloudnative-pg/postgresql:16
+  
+  storage:
+    size: 1Gi # Espacio suficiente para los esquemas de prueba de Petclinic
+  
+  bootstrap:
+    initdb:
+      database: petclinic
+      owner: petclinic
+      secret:
+        name: petclinic-db-secrets

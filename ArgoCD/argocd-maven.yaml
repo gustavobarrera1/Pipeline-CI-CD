@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: app-maven-test-cd
+  namespace: argocd
+spec:
+  project: default
+  source:
+    path: .
+    repoURL: 'http://gitea-http.gitea.svc.cluster.local:3000/gitea_admin/test-cicd-maven-2.git'
+    targetRevision: main
+    helm:
+      valueFiles:
+        - values.yaml
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: cicd-test
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

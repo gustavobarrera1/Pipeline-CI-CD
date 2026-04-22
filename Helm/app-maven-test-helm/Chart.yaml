@@ -1,0 +1,6 @@
+apiVersion: v2
+name: app-maven-test-cd
+description: Un Helm chart para una aplicación Java/Maven
+type: application
+version: 0.1.0
+appVersion: "1.0.0"

@@ -1,0 +1,95 @@
+pipeline {
+  agent {
+    kubernetes {
+      yaml '''
+        apiVersion: v1
+        kind: Pod
+        spec:
+          containers:
+          - name: maven-agent
+            image: maven:3.9-eclipse-temurin-17
+            command: ["sleep"]
+            args: ["infinity"]
+        '''
+    }
+  }
+
+  environment {
+    // Genera una versión numérica autoincremental ideal para ArgoCD Image Updater
+    // Ejemplo de salida: 1.0.1, 1.0.2, 1.0.3...
+    APP_VERSION = "1.0.${env.BUILD_NUMBER}"
+
+    SPRING_PROFILES_ACTIVE = "postgres"
+    SPRING_DATASOURCE_URL = "jdbc:postgresql://petclinic-db-rw:5432/petclinic"
+    SPRING_DATASOURCE_USERNAME = "petclinic"
+    SPRING_DATASOURCE_PASSWORD = "petclinic"
+
+    SONAR_HOST_URL = 'http://sonarqube-dev-sonarqube.sonarqube.svc.cluster.local:9000'
+    SONAR_TOKEN = credentials('sonarqube')
+  }
+
+  stages {
+    stage('Verificación SCM') {
+      steps {
+        checkout scm
+        echo "Construyendo y empujando la imagen con el tag: ${APP_VERSION}"
+      }  
+    }
+
+    stage('Build') {
+      steps {
+        container('maven-agent') {
+          sh 'mvn -B -DskipTests -Dcheckstyle.skip=true clean package'
+        }
+      }
+    }
+
+    stage('Test') {
+      steps {
+        container('maven-agent') {
+          sh 'mvn -Dcheckstyle.skip=true test'
+          junit '**/target/surefire-reports/*.xml'
+        }
+      }
+    }
+
+    stage('SonarQube Analysis') {
+      steps {
+        container('maven-agent') {
+          sh '''
+            mvn sonar:sonar \
+              -Dsonar.projectKey=maven-app-test-1 \
+              -Dsonar.host.url=$SONAR_HOST_URL \
+              -Dsonar.token=$SONAR_TOKEN \
+              -Dcheckstyle.skip=true
+          '''
+        }
+      }
+    }
+
+    stage('Build & Push con Jib') {
+      steps {
+        container('maven-agent') {
+          script {
+            def imageName = "gustavobarrera/maven-test-cicd:${APP_VERSION}"
+                        
+            withCredentials([usernamePassword(credentialsId: 'dockerlogin', passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
+              
+              sh """
+                mvn compile com.google.cloud.tools:jib-maven-plugin:3.4.0:build \
+                  -Dimage=${imageName} \
+                  -Djib.to.auth.username=\${DOCKER_USER} \
+                  -Djib.to.auth.password=\${DOCKER_PASS} \
+                  -Djib.from.image=eclipse-temurin:17-jre \
+                  -Dcheckstyle.skip=true \
+                  -Dspring-javaformat.skip=true \
+                  -DskipTests \
+                  -Denforcer.skip=true
+              """
+            }
+          }
+        }  
+      } 
+    }
+  }
+}
