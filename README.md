@@ -1,10 +1,9 @@
-# Proyecto DevOps
+# Laboratorio CICD en Kubernetes
 
-Este repositorio contiene distintas configuraciones y recursos utilizados para pruebas de CI/CD.
+Enlace a documentación técnica y videos de implementación: [Ver documentación](https://docs.google.com/document/d/1yJ4LdiS1qGnR3nx7Cmjo5w60Jy6apKdcBsdNGmTIYQ8/edit?usp=sharing)
 
-- ArgoCD: manifiestos de despliegue.
-- Helm: chart de la aplicación.
-- spring-petclinic: aplicación base utilizada para testing.
-- CPNG-Extra: configuraciones adicionales de soporte.
+- Implementación CI/CD
+  - Herramientas: Jenkins, Sonarqube, Helm, ArgoCD.
+  - Descripción: Pipeline completo de CI/CD (Compilación, Test, SonarQube, DockerHub, Despliegue).
 
-El objetivo es centralizar todo en un solo repositorio para facilitar las pruebas y la integración.
+![Diagrama](./docs/diagrama.png)
